@@ -1,0 +1,36 @@
+#Config MariaDB
+spring:
+  application:
+    name: Library
+  datasource:
+    url: ${MARIADB_URL:jdbc:mariadb://localhost:3306/library}
+    username: ${MARIADB_USER}
+    password: ${MARIADB_PASSWORD}
+    driver-class-name: org.mariadb.jdbc.Driver
+#Config JPA
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MariaDB103Dialect
+  thymeleaf:
+    cache: false
+#Mail Configuration
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${SENDER_MAIL_USERNAME}
+    password: ${SENDER_MAIL_PASSWORD}
+#Otras propiedades
+    properties:
+      mail:
+        smtp:
+          auth: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+#TLS, port 587
+          starttls:
+            enable: true

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org/">
+
+<head th:replace="template.html :: head">
+</head>
+
+<body>
+
+	<!-- Navbar -->
+	<nav th:replace="template.html :: nav"></nav>
+
+	<div class="container mt-5 pb-4 bg-light rounded-3" style="--bs-bg-opacity: .75;">
+		<h1 class="titulo text-center">
+			Welcome to
+		</h1>
+		<h1 class="titulo text-center">
+			<span class="detalle">EGG</span>  Library
+		</h1>
+	</div>
+
+	<!-- Bootstrap Bundle with Popper -->
+	<script src="../static/js/bootstrap.bundle.min.js" th:src="@{/js/bootstrap.bundle.min.js}"
+		integrity="sha384-/bQdsTh/da6pkI1MST/rWKFNjaCP5gBSY4sEBT38Q/9RBh9AH40zEOg7Hlq2THRZ"
+		crossorigin="anonymous"></script>
+</body>
+
+</html>

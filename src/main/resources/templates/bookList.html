@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org/">
+
+<head th:replace="template.html :: head">
+</head>
+
+<body>
+    
+    <!-- Navbar -->
+	<nav th:replace="template.html :: nav"></nav>
+
+    <div class="container mt-4 bg-light rounded-3">
+        <div class="row py-3 bg-darkBlue rounded-top">
+            <div class="col ps-5 text-white">
+                <h2>Book's Manager</h2>
+            </div>
+            <div class="col-2 d-flex right align-base align-items-center">
+                <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addBook">
+                    Add New Book</button>
+            </div>
+            <div class="modal fade" id="addBook" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+                aria-labelledby="addBookLabel" aria-hidden="true">
+                <form th:action="@{/book/save/0}" method="POST" id="formNew">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="addBookLabel">New Book</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                    aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <label for="isbn" class="form-label">ISBN:</label>
+                                <input type="number" class="form-control" id="isbn" name="isbn"><br>
+
+                                <label for="title" class="form-label">Book Title:</label>
+                                <input type="text" class="form-control" id="title" name="title"><br>
+
+                                <label for="year" class="form-label">Year published:</label>
+                                <input type="number" class="form-control" id="year" name="year"><br>
+
+                                <label for="ncopies" class="form-label">Number of Copies:</label>
+                                <input type="number" class="form-control" id="ncopies" name="numOfCopies"><br>
+
+                                <label for="Select1" class="form-label">Author:</label>
+                                <select class="form-select" aria-label="Select an Author" id="select1" name="author_id">
+                                    <option selected>Select an Author</option>
+                                    <div th:each="author : ${authors}">
+                                        <option th:value="${author.id}" th:text="${author.name}">One</option>
+                                    </div>
+                                </select><br>
+
+                                <label for="select2" class="form-label">Publisher:</label>
+                                <select class="form-select" aria-label="Select a Publisher" id="select2" name="publisher_id">
+                                    <option selected>Select a Publisher</option>
+                                    <div th:each="publisher : ${publishers}">
+                                        <option th:value="${publisher.id}" th:text="${publisher.name}">One</option>
+                                    </div>
+                                </select>
+
+                                <p th:if="${error != null}" th:text="${error}" style="color: red;"></p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-primary">Save</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div>
+            <h2 th:if="${books.isEmpty()}" class="p-3 mb-2 bg-light col-4" style="--bs-bg-opacity: .80;">
+                No Books Added.
+            </h2>
+            <table th:if="${!books.isEmpty()}" class="table table-striped align-middle bg-light"
+                style="--bs-bg-opacity: .80;">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th class="text-center">Edit</th>
+                        <th class="text-center">Delete</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="book : ${books}">
+                        <td th:text="${book.title}"></td>
+
+                        <td class="text-center"><button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                                data-bs-target="#editModal">Edit</button></td>
+                        <div class="modal fade" id="editModal" data-bs-backdrop="static" data-bs-keyboard="false"
+                            tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+                            <form th:action="@{/book/save/{id} (id=${book.id})}" method="post" id="formEdit">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="editModalLabel">Edit Book</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <input type="hidden" th:value="${book.id}" name="id" id="id">
+                                            <label for="fname" class="form-label">Autor Name:</label>
+                                            <input type="text" class="form-control" id="fname" name="fname"
+                                                th:value="${book.title}">
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary"
+                                                data-bs-dismiss="modal">Close</button>
+                                            <button type="submit" class="btn btn-primary">Save</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+
+                        <td class="text-center"><a th:href="@{/book/delete/(id=__${book.id}__)}" type="button"
+                                class="btn btn-danger">Delete</a></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+
+    <!-- Bootstrap Bundle with Popper -->
+	<script src="../static/js/bootstrap.bundle.min.js" th:src="@{/js/bootstrap.bundle.min.js}"
+    integrity="sha384-/bQdsTh/da6pkI1MST/rWKFNjaCP5gBSY4sEBT38Q/9RBh9AH40zEOg7Hlq2THRZ"
+    crossorigin="anonymous"></script>
+</body>
+</html>

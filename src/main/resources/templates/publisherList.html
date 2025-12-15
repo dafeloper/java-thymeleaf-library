@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="template.html :: head">
+</head>
+
+<body>
+
+    <nav th:replace="template.html :: nav"></nav>
+
+    <div class="container mt-4 bg-light rounded-3">
+        <div class="row py-3 bg-darkBlue rounded-top">
+            <div class="col ps-5 text-white">
+                <h2>Manage Publishers</h2>
+            </div>
+            <div class="col-2  d-flex right align-base align-items-center">
+                <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addPublisher">Add New
+                    Publisher</button>
+            </div>
+            <div class="modal fade" id="addPublisher" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+                aria-labelledby="addPublisherLabel" aria-hidden="true">
+                <form th:action="@{/publisher/save/0}" method="POST">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="addPublisherLabel">New Publisher</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                    aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <label for="fname" class="form-label">Publisher Name:</label>
+                                <input type="text" class="form-control" id="name" name="name">
+                                <p th:if="${error != null}" th:text="${error}" style="color: red;"></p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-primary">Save</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div>
+            <h2 th:if="${publishers.isEmpty()}" class="p-3 mb-2 bg-light col-4" style="--bs-bg-opacity: .80;">No Publishers
+                added.</h2>
+            <table th:if="${!publishers.isEmpty()}" class="table table-striped align-middle bg-light"
+                style="--bs-bg-opacity: .80;">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th class="text-center">Edit</th>
+                        <th class="text-center">Delete</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="publisher : ${publishers}">
+                        <td th:text="${publisher.name}"></td>
+
+                        <td class="text-center"><button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                                data-bs-target="#editModal">Edit</button></td>
+                        <div class="modal fade" id="editModal" data-bs-backdrop="static" data-bs-keyboard="false"
+                            tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+                            <form th:action="@{/publisher/save/{id} (id=${publisher.id})}" method="post">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="editModalLabel">Edit Author</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <input type="hidden" th:value="${publisher.id}" name="id" id="id">
+                                            <label for="fname" class="form-label">Publisher Name:</label>
+                                            <input type="text" class="form-control" id="name" name="name"
+                                                th:value="${publisher.name}">
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary"
+                                                data-bs-dismiss="modal">Close</button>
+                                            <button type="submit" class="btn btn-primary">Save</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+
+                        <td class="text-center"><a th:href="@{/publisher/delete(id=__${publisher.id}__)}" type="button"
+                                class="btn btn-danger">Delete</a></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="../static/js/bootstrap.bundle.min.js" th:src="@{/js/bootstrap.bundle.min.js}"
+        integrity="sha384-/bQdsTh/da6pkI1MST/rWKFNjaCP5gBSY4sEBT38Q/9RBh9AH40zEOg7Hlq2THRZ"
+        crossorigin="anonymous"></script>
+</body>
+
+</html>
