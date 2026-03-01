@@ -1,0 +1,140 @@
+name: Deploy to EC2 (Docker + ECR + SSM)
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  id-token: write   # Required for OIDC
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPO: java-thymeleaf-library
+
+  # App settings
+  APP_PORT: "8080"                 # Puerto dentro del contenedor (Spring Boot default)
+  CONTAINER_NAME: java-thymeleaf-library
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      # 1) Auth to AWS via OIDC (no AWS keys)
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # 2) Login to ECR
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # 3) Build & Push docker image
+      - name: Build & Push Docker image to ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          GIT_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          IMAGE_URI_SHA="$ECR_REGISTRY/${ECR_REPO}:${GIT_SHA}"
+          IMAGE_URI_LATEST="$ECR_REGISTRY/${ECR_REPO}:latest"
+
+          echo "Building image: $IMAGE_URI_SHA"
+          docker build -t "$IMAGE_URI_SHA" .
+
+          echo "Tagging latest: $IMAGE_URI_LATEST"
+          docker tag "$IMAGE_URI_SHA" "$IMAGE_URI_LATEST"
+
+          echo "Pushing: $IMAGE_URI_SHA"
+          docker push "$IMAGE_URI_SHA"
+
+          echo "Pushing: $IMAGE_URI_LATEST"
+          docker push "$IMAGE_URI_LATEST"
+
+          # We'll deploy 'latest' (simple). If you prefer SHA, change below.
+          echo "DEPLOY_IMAGE_URI=$IMAGE_URI_LATEST" >> $GITHUB_ENV
+
+      # 4) Trigger deploy on EC2 via SSM (runs deploy.sh on the instance)
+      - name: Deploy on EC2 via SSM RunCommand
+        id: ssm-deploy
+        run: |
+          set -euo pipefail
+
+          echo "Deploying image: $DEPLOY_IMAGE_URI"
+          COMMAND_ID=$(
+            aws ssm send-command \
+              --region "${AWS_REGION}" \
+              --document-name "AWS-RunShellScript" \
+              --targets "Key=instanceids,Values=${{ secrets.EC2_INSTANCE_ID }}" \
+              --comment "Deploy ${ECR_REPOnstancei} from GitHub Actions" \
+              --parameters "commands=[
+                \"export AWS_REGION='${AWS_REGION}'\",
+                \"export ECR_IMAGE_URI='${DEPLOY_IMAGE_URI}'\",
+                \"export APP_PORT='${APP_PORT}'\",
+                \"export CONTAINER_NAME='${CONTAINER_NAME}'\",
+                \"export DB_HOST='${{ secrets.DB_HOST }}'\",
+                \"export DB_PORT='3306'\",
+                \"export DB_NAME='${{ secrets.DB_NAME }}'\",
+                \"export DB_USER='${{ secrets.DB_USER }}'\",
+                \"export DB_PASSWORD='${{ secrets.DB_PASSWORD }}'\",
+                \"/home/ec2-user/app/deploy.sh\"
+              ]" \
+              --query "Command.CommandId" \
+              --output text
+          )
+
+          echo "SSM CommandId: $COMMAND_ID"
+          echo "COMMAND_ID=$COMMAND_ID" >> $GITHUB_ENV
+
+      # 5) Wait + fetch output (so you can see errors in Actions logs)
+      - name: Wait for SSM command + print output
+        run: |
+          set -euo pipefail
+
+          INSTANCE_ID="${{ secrets.EC2_INSTANCE_ID }}"
+
+          echo "Waiting for SSM command to finish..."
+          for i in {1..40}; do
+            STATUS=$(aws ssm get-command-invocation \
+              --region "${AWS_REGION}" \
+              --command-id "${COMMAND_ID}" \
+              --instance-id "${INSTANCE_ID}" \
+              --query "Status" \
+              --output text || true)
+
+            echo "Attempt $i - Status: $STATUS"
+
+            if [[ "$STATUS" == "Success" ]]; then
+              break
+            fi
+
+            if [[ "$STATUS" == "Failed" || "$STATUS" == "Cancelled" || "$STATUS" == "TimedOut" ]]; then
+              echo "Command ended with failure status: $STATUS"
+              aws ssm get-command-invocation \
+                --region "${AWS_REGION}" \
+                --command-id "${COMMAND_ID}" \
+                --instance-id "${INSTANCE_ID}" \
+                --query "{Status:Status,StdOut:StandardOutputContent,StdErr:StandardErrorContent}" \
+                --output json
+              exit 1
+            fi
+
+            sleep 5
+          done
+
+          echo "Fetching final output..."
+          aws ssm get-command-invocation \
+            --region "${AWS_REGION}" \
+            --command-id "${COMMAND_ID}" \
+            --instance-id "${INSTANCE_ID}" \
+            --query "{Status:Status,StdOut:StandardOutputContent,StdErr:StandardErrorContent}" \
+            --output json
