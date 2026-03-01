@@ -33,6 +33,9 @@ jobs:
           echo "ACTIONS_ID_TOKEN_REQUEST_URL present? -> ${ACTIONS_ID_TOKEN_REQUEST_URL:+yes}"
           echo "ACTIONS_ID_TOKEN_REQUEST_TOKEN present? -> ${ACTIONS_ID_TOKEN_REQUEST_TOKEN:+yes}"
 
+      - name: Verify AWS identity
+        run: aws sts get-caller-identity
+
       # 1) Auth to AWS via OIDC (no AWS keys)
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
