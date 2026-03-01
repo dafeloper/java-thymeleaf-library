@@ -24,6 +24,14 @@ jobs:
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
+        
+      - name: Debug OIDC availability
+        run: |
+          echo "repo=$GITHUB_REPOSITORY"
+          echo "ref=$GITHUB_REF"
+          echo "actor=$GITHUB_ACTOR"
+          echo "ACTIONS_ID_TOKEN_REQUEST_URL present? -> ${ACTIONS_ID_TOKEN_REQUEST_URL:+yes}"
+          echo "ACTIONS_ID_TOKEN_REQUEST_TOKEN present? -> ${ACTIONS_ID_TOKEN_REQUEST_TOKEN:+yes}"
 
       # 1) Auth to AWS via OIDC (no AWS keys)
       - name: Configure AWS credentials (OIDC)
