@@ -18,6 +18,15 @@ jobs:
           echo "sha=$GITHUB_SHA"
           echo "actor=$GITHUB_ACTOR"
 
+      - name: Check secret is present (no value printed)
+        run: |
+          if [ -z "${{ secrets.AWS_DEPLOY_ROLE_ARN }}" ]; then
+            echo "AWS_DEPLOY_ROLE_ARN secret is EMPTY or not available to this workflow."
+            exit 1
+          else
+            echo "AWS_DEPLOY_ROLE_ARN secret is present."
+          fi
+
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
