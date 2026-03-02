@@ -76,7 +76,7 @@ jobs:
               --region "${AWS_REGION}" \
               --document-name "AWS-RunShellScript" \
               --targets "Key=instanceids,Values=${{ secrets.EC2_INSTANCE_ID }}" \
-              --comment "Deploy ${ECR_REPOnstancei} from GitHub Actions" \
+              --comment "Deploy ${ECR_REPO} from GitHub Actions" \
               --parameters "commands=[
                 \"export AWS_REGION='${AWS_REGION}'\",
                 \"export ECR_IMAGE_URI='${DEPLOY_IMAGE_URI}'\",
